@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VidNote AI</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">V</span>
+          <div>
+            <h1>VidNote AI</h1>
+            <p id="currentTitle">等待上传视频</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <label class="icon-button primary" title="上传视频">
+            <input id="videoInput" type="file" accept="video/*" multiple hidden />
+            <span>+</span>
+          </label>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section id="dropZone" class="player-pane" aria-label="视频播放器">
+          <div class="video-shell">
+            <video id="video" playsinline preload="metadata"></video>
+            <div id="emptyState" class="empty-state">
+              <div class="upload-symbol">⬆</div>
+              <h2>视频工作台</h2>
+              <p>等待本地视频文件</p>
+              <label class="upload-button">
+                <input id="heroVideoInput" type="file" accept="video/*" multiple hidden />
+                选择视频文件
+              </label>
+            </div>
+            <div id="subtitleOverlay" class="subtitle-overlay" hidden></div>
+            <div class="stage-tools">
+              <button id="aiSubtitleQuick" class="tool-button" type="button" title="AI 字幕">字幕</button>
+              <button id="summaryQuick" class="tool-button" type="button" title="AI 总结">总结</button>
+              <button id="bookmarkButton" class="tool-button" type="button" title="添加标记">标记</button>
+            </div>
+            <button id="pipButton" class="pip-float" title="画中画" type="button">◱</button>
+          </div>
+
+          <div class="timeline">
+            <span id="currentTime">00:00</span>
+            <input id="seekRange" type="range" min="0" max="1000" value="0" />
+            <span id="duration">00:00</span>
+          </div>
+
+          <div class="controls">
+            <div class="control-cluster transport">
+              <button id="previousButton" class="round-button" type="button" title="上一个">⏮</button>
+              <button id="backwardButton" class="round-button" type="button" title="后退 10 秒">↶</button>
+              <button id="playButton" class="play-button" type="button" title="播放">▶</button>
+              <button id="forwardButton" class="round-button" type="button" title="前进 10 秒">↷</button>
+              <button id="nextButton" class="round-button" type="button" title="下一个">⏭</button>
+            </div>
+
+            <div class="control-cluster speed-control" aria-label="倍速播放">
+              <button id="speedDown" class="round-button" type="button" title="降低 0.1 倍">−</button>
+              <input id="speedRange" type="range" min="0.1" max="4" step="0.1" value="1" />
+              <button id="speedUp" class="round-button" type="button" title="提高 0.1 倍">+</button>
+              <output id="speedValue">1.0x</output>
+              <div class="speed-presets">
+                <button data-speed="0.5" type="button">0.5</button>
+                <button data-speed="1" type="button">1.0</button>
+                <button data-speed="1.5" type="button">1.5</button>
+                <button data-speed="2" type="button">2.0</button>
+              </div>
+            </div>
+
+            <div class="control-cluster utility">
+              <button id="frameBack" class="round-button" type="button" title="上一帧">◀▮</button>
+              <button id="frameForward" class="round-button" type="button" title="下一帧">▮▶</button>
+              <button id="loopButton" class="round-button" type="button" title="循环">∞</button>
+              <button id="muteButton" class="round-button" type="button" title="静音">🔊</button>
+              <input id="volumeRange" class="volume-range" type="range" min="0" max="1" step="0.01" value="1" />
+              <button id="fullscreenButton" class="round-button" type="button" title="全屏">⛶</button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="side-panel" aria-label="视频工具栏">
+          <nav class="tabs" aria-label="右侧功能标签">
+            <button class="tab-button active" data-tab="videos" type="button">视频</button>
+            <button class="tab-button" data-tab="subtitles" type="button">字幕</button>
+            <button class="tab-button" data-tab="summary" type="button">AI 总结</button>
+            <button class="tab-button" data-tab="settings" type="button">设置</button>
+          </nav>
+
+          <section id="tab-videos" class="tab-panel active">
+            <div class="panel-header">
+              <h2>播放列表</h2>
+              <label class="small-button">
+                <input id="playlistInput" type="file" accept="video/*" multiple hidden />
+                添加
+              </label>
+            </div>
+            <div id="playlist" class="playlist"></div>
+
+            <div class="video-meta">
+              <h3>当前视频</h3>
+              <dl>
+                <div>
+                  <dt>文件大小</dt>
+                  <dd id="metaSize">--</dd>
+                </div>
+                <div>
+                  <dt>时长</dt>
+                  <dd id="metaDuration">--</dd>
+                </div>
+                <div>
+                  <dt>分辨率</dt>
+                  <dd id="metaResolution">--</dd>
+                </div>
+                <div>
+                  <dt>倍速</dt>
+                  <dd id="metaRate">1.0x</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div class="marks-block">
+              <div class="panel-header tight">
+                <h3>时间标记</h3>
+                <button id="clearMarks" class="small-button ghost" type="button">清空</button>
+              </div>
+              <div id="marksList" class="marks-list"></div>
+            </div>
+          </section>
+
+          <section id="tab-subtitles" class="tab-panel">
+            <div class="panel-header">
+              <h2>字幕</h2>
+              <label class="small-button">
+                <input id="subtitleInput" type="file" accept=".srt,.vtt,text/vtt" hidden />
+                导入
+              </label>
+            </div>
+
+            <div class="inline-controls">
+              <label class="switch">
+                <input id="subtitleToggle" type="checkbox" checked />
+                <span></span>
+                显示字幕
+              </label>
+              <button id="downloadVtt" class="small-button ghost" type="button">导出 VTT</button>
+            </div>
+
+            <div class="offset-control">
+              <label for="subtitleOffset">字幕偏移</label>
+              <div>
+                <button id="offsetDown" class="round-button" type="button">−</button>
+                <output id="offsetValue">0.0s</output>
+                <button id="offsetUp" class="round-button" type="button">+</button>
+              </div>
+            </div>
+
+            <button id="generateSubtitle" class="wide-button" type="button">生成 AI 字幕</button>
+            <textarea id="transcriptBox" class="transcript-box" placeholder="字幕文本会显示在这里，也可以粘贴已有转写文本"></textarea>
+            <div id="subtitleList" class="cue-list"></div>
+          </section>
+
+          <section id="tab-summary" class="tab-panel">
+            <div class="panel-header">
+              <h2>AI 视频要点</h2>
+              <button id="copySummary" class="small-button ghost" type="button">复制</button>
+            </div>
+            <div class="summary-actions">
+              <button id="generateSummary" class="wide-button" type="button">生成要点总结</button>
+              <button id="generateChapters" class="wide-button secondary" type="button">生成章节大纲</button>
+            </div>
+            <div id="summaryStatus" class="status-line"></div>
+            <article id="summaryOutput" class="summary-output"></article>
+          </section>
+
+          <section id="tab-settings" class="tab-panel">
+            <div class="panel-header">
+              <h2>API 设置</h2>
+              <button id="saveSettings" class="small-button" type="button">保存</button>
+            </div>
+
+            <form id="settingsForm" class="settings-form">
+              <section class="settings-group">
+                <h3>字幕 API</h3>
+                <label>
+                  Base URL
+                  <input id="transcriptionApiBaseUrl" type="url" placeholder="https://api.openai.com" autocomplete="off" />
+                </label>
+                <label>
+                  API Key
+                  <input id="transcriptionApiKey" type="password" placeholder="sk-..." autocomplete="off" />
+                </label>
+                <label>
+                  Endpoint
+                  <input id="transcriptionEndpoint" type="text" placeholder="/v1/audio/transcriptions" />
+                </label>
+                <label>
+                  字幕模型
+                  <input id="transcriptionModel" type="text" placeholder="whisper-1" />
+                </label>
+                <label>
+                  字幕语言
+                  <input id="subtitleLanguage" type="text" placeholder="zh" />
+                </label>
+              </section>
+
+              <section class="settings-group">
+                <h3>总结 API</h3>
+                <label>
+                  Base URL
+                  <input id="chatApiBaseUrl" type="url" placeholder="https://api.openai.com" autocomplete="off" />
+                </label>
+                <label>
+                  API Key
+                  <input id="chatApiKey" type="password" placeholder="sk-..." autocomplete="off" />
+                </label>
+                <label>
+                  Endpoint
+                  <input id="chatEndpoint" type="text" placeholder="/v1/chat/completions" />
+                </label>
+                <label>
+                  总结模型
+                  <input id="chatModel" type="text" placeholder="gpt-4.1-mini" />
+                </label>
+              </section>
+            </form>
+            <div id="settingsStatus" class="status-line"></div>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <template id="playlistItemTemplate">
+      <button class="playlist-item" type="button">
+        <span class="thumb">MP4</span>
+        <span class="item-main">
+          <strong></strong>
+          <small></small>
+        </span>
+      </button>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

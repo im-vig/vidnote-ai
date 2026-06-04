@@ -1,0 +1,19 @@
+{
+  "name": "vidnote-ai",
+  "version": "0.1.0",
+  "description": "A zero-dependency local video player with AI subtitles and AI summaries.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "check": "node --check app.js && node --check scripts/serve.mjs"
+  },
+  "keywords": [
+    "video-player",
+    "subtitles",
+    "ai",
+    "transcription",
+    "summary"
+  ],
+  "author": "",
+  "license": "MIT"
+}
